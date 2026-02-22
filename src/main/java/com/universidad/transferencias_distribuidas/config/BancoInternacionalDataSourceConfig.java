@@ -32,7 +32,7 @@ import java.util.Map;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-    basePackages = "com.universidad.transferencias.repository.internacional",
+    basePackages = "com.universidad.transferencias_distribuidas.repository.internacional",
     entityManagerFactoryRef = "internacionalEntityManagerFactory",
     transactionManagerRef = "internacionalTransactionManager"
 )
@@ -73,7 +73,7 @@ public class BancoInternacionalDataSourceConfig {
         
         return builder
                 .dataSource(dataSource)
-                .packages("com.universidad.transferencias.model")
+                .packages("com.universidad.transferencias_distribuidas.model")
                 .persistenceUnit("internacional")
                 .properties(properties)
                 .build();

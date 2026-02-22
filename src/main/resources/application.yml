@@ -29,12 +29,17 @@ spring:
       max-lifetime: 1800000
 
   jpa:
+    # IMPORTANTE: Cambiado a 'update' para que cree las tablas 'cuenta' al iniciar
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        # Dialectos explícitos para evitar confusiones entre MySQL y Postgres
+        dialect: 
+          nacional: org.hibernate.dialect.PostgreSQLDialect
+          internacional: org.hibernate.dialect.MySQLDialect
 
 server:
   port: 8080
@@ -44,22 +49,19 @@ logging:
     com.universidad.transferencias_distribuidas: DEBUG
     org.springframework.transaction: DEBUG
     org.hibernate.SQL: DEBUG
+    # Para ver los valores que se guardan en los logs
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-# Perfil Docker
+# Perfil Docker (Solo se activa si corres el JAR dentro de Docker)
 ---
 spring:
   config:
     activate:
       on-profile: docker
+  # En Docker, los hosts deben ser los nombres de los servicios del compose
+  datasource-nacional:
+    jdbc-url: jdbc:postgresql://db-nacional:5432/banco_nacional
+  datasource-internacional:
+    jdbc-url: jdbc:mysql://db-internacional:3306/banco_internacional?useSSL=false
   jpa:
     show-sql: false
-    properties:
-      hibernate:
-        format_sql: false
-
-logging:
-  level:
-    com.universidad.transferencias_distribuidas: INFO
-    org.springframework.transaction: INFO
-    org.hibernate: WARN

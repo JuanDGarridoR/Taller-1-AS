@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "movimiento") // Ajustado a tus SQL
+@Table(name = "movimiento")
 @Data
 public class Movimiento {
     @Id
@@ -16,7 +16,7 @@ public class Movimiento {
     @Column(name = "cuenta_id")
     private Long cuentaId;
 
-    private String tipo; // "DEBITO", "CREDITO", "COMPENSACION"
+    private String tipo;
     private BigDecimal monto;
 
     @Column(name = "saldo_anterior")
