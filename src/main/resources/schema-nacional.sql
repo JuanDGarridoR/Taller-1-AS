@@ -45,10 +45,11 @@ CREATE INDEX idx_transferencia_id ON transferencia(id_transaccion);
 CREATE INDEX idx_transferencia_estado ON transferencia(estado);
 
 -- Cuentas del Banco Nacional
-INSERT INTO cuenta (numero_cuenta, titular, saldo) VALUES
-('BN-001', 'Juan Pérez', 5000.00),
-('BN-002', 'María García', 10000.00),
-('BN-003', 'Carlos Rodríguez', 2500.00),
-('BN-004', 'Ana Martínez', 15000.00);
+INSERT INTO cuenta (numero_cuenta, titular, saldo, activa) VALUES
+('BN-001', 'Juan Pérez', 5000.00, true),
+('BN-002', 'María García', 10000.00, true),
+('BN-003', 'Carlos Rodríguez', 2500.00, true),
+('BN-004', 'Ana Martínez', 15000.00, true),
+('BN-005', 'Cuenta Bloqueada Nacional', 1000.00, false); -- Inactiva: para probar rechazo en origen
 
 Commit;

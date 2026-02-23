@@ -30,11 +30,12 @@ CREATE TABLE IF NOT EXISTS movimiento (
 
 
 -- Cuentas del Banco Internacional
-INSERT INTO cuenta (numero_cuenta, titular, saldo) VALUES
-('BI-001', 'Laura Sánchez', 8000.00),
-('BI-002', 'Pedro López', 3000.00),
-('BI-003', 'Sofia Hernández', 12000.00),
-('BI-004', 'Diego Torres', 6000.00);
+INSERT INTO cuenta (numero_cuenta, titular, saldo, activa) VALUES
+('BI-001', 'Laura Sánchez', 8000.00, true),
+('BI-002', 'Pedro López', 3000.00, true),
+('BI-003', 'Sofia Hernández', 12000.00, true),
+('BI-004', 'Diego Torres', 6000.00, true),
+('BI-005', 'Cuenta Bloqueada Internacional', 2000.00, false); -- Inactiva: para probar rechazo en destino
 
 Commit;
 

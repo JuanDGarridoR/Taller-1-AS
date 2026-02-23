@@ -96,7 +96,21 @@ El sistema está compuesto por cuatro capas principales que trabajan en conjunto
 
 ### Flujo de Comunicación
 
-aqui hay q hacer una imagen o algo ajdnkjand
+```
+[Frontend] → POST /api/transferencias
+                 ↓
+        [TransferenciaService]  ← Orquestador SAGA
+         |        ↓ persiste estado
+         |   [tabla transferencia] (PostgreSQL)
+         |
+         ├─ PASO 1: BancoNacionalService.debitar()
+         |          ↓ PostgreSQL (PESSIMISTIC_WRITE lock)
+         |   [tabla cuenta + movimiento]
+         |
+         └─ PASO 2: BancoInternacionalService.acreditar()
+                    ↓ MySQL (PESSIMISTIC_WRITE lock)
+            [tabla cuenta + movimiento]
+```
 
 ### Patrón SAGA Implementado
 
@@ -110,34 +124,85 @@ El sistema utiliza el patrón SAGA Orquestado para mantener la consistencia entr
 
 En caso de fallo durante la acreditación, se ejecuta la transacción compensatoria:
 - Revertir el débito devolviendo el dinero a la cuenta origen
-- Marcar la transferencia como FALLIDA
+- Marcar la transferencia como REVERTIDA
+
+Estados del SAGA:
+```
+INICIADA → DEBITO_COMPLETADO → COMPLETADA          (camino exitoso)
+INICIADA → FALLIDA                                 (débito falló, sin cambios)
+DEBITO_COMPLETADO → COMPENSANDO → REVERTIDA        (crédito falló, débito revertido)
+```
 
 ---
 
 ## Decisiones de Diseño
 
+### 1. Patrón SAGA Orquestado en lugar de XA/2PC
+PostgreSQL y MySQL tienen implementaciones de XA incompatibles e incompletas. XA requiere además un transaction manager externo (Atomikos, Bitronix) con alto overhead de latencia. El patrón SAGA resuelve esto con transacciones locales independientes y transacciones compensatorias, priorizando disponibilidad sobre consistencia fuerte (teorema CAP).
+
+### 2. Log durable del SAGA en PostgreSQL
+El estado de cada SAGA se persiste en la tabla `transferencia` **antes** de mover dinero. Esto garantiza que si la JVM muere entre el débito y el crédito, el estado queda registrado en BD y puede recuperarse manualmente. Sin esto, el dinero podría perderse sin trazas.
+
+### 3. Locks pesimistas (PESSIMISTIC_WRITE)
+Ambos repositorios usan `@Lock(LockModeType.PESSIMISTIC_WRITE)` en `findByNumeroCuenta()`. Esto previene condiciones de carrera cuando dos transferencias intentan debitar la misma cuenta simultáneamente: la segunda espera a que la primera confirme o revierta antes de proceder.
+
+### 4. Repositorios separados por base de datos
+Cada banco tiene su propio paquete de repositorios vinculado a su `EntityManagerFactory` y `TransactionManager`. Esto evita que Spring JPA mezcle contextos de persistencia entre PostgreSQL y MySQL, problema que causa errores difíciles de diagnosticar.
+
+### 5. Audit trail con tabla Movimiento
+Cada operación (débito, crédito, compensación) registra un `Movimiento` con saldo anterior y nuevo. Esto proporciona un historial inmutable de cada paso, requerido para auditorías y para verificar la consistencia del sistema en producción.
+
 ## Capturas de Pantalla de Pruebas
 
 ### Prueba 1: Consulta de Cuentas Nacionales
 
+Endpoint: `GET /api/cuentas/nacional`
+
+Se consultan las cuentas del Banco Nacional almacenadas en **PostgreSQL**. El frontend las muestra en la pestaña "Banco Nacional" con número de cuenta, titular, saldo actual y estado. Confirma que el DataSource primario (PostgreSQL) está operativo y retorna datos correctamente.
+
+![Prueba 1 - Cuentas Nacionales](capturas/Visualizacion_bn.png)
+
+---
 
 ### Prueba 2: Consulta de Cuentas Internacionales
 
+Endpoint: `GET /api/cuentas/internacional`
 
-### Prueba 3: Consulta de Saldo Específico
+Se consultan las cuentas del Banco Internacional almacenadas en **MySQL**. La pestaña "Banco Internacional" confirma que el segundo DataSource está operativo e independiente del primero. Demuestra que la configuración dual de `EntityManagerFactory` funciona correctamente, cada banco consultando su propia base de datos.
 
+![Prueba 2 - Cuentas Internacionales](capturas/Visualizacion_bi.png)
 
-### Prueba 4: Transferencia Exitosa
+---
 
+### Prueba 3: Transferencia Exitosa — SAGA Happy Path
 
-### Prueba 5: Verificación de Saldos Después de Transferencia
+Endpoint: `POST /api/transferencias`
+Datos: `BN-004 → BI-003, $12.00`
 
+El orquestador SAGA ejecuta los dos pasos correctamente:
+1. **PASO 1:** Débito en Banco Nacional (PostgreSQL) — estado persiste como `DEBITO_COMPLETADO`
+2. **PASO 2:** Crédito en Banco Internacional (MySQL) — estado persiste como `COMPLETADA`
 
-### Prueba 6: Transferencia con Saldo Insuficiente
+El resultado muestra estado **COMPLETADA** con el UUID de transacción generado por el orquestador. Los saldos quedan actualizados: `BN-004` $15000 → $14988 y `BI-003` $12000 → $12012. La sección "Historial de Transferencias" del frontend y "Consultar Saldo" confirman la consistencia en ambas bases de datos.
 
+![Prueba 3 - Transferencia Exitosa](capturas/tranferencia_exitosa_nacional.png)
 
-### Prueba 7: Logs del Sistema
+---
 
+### Prueba 4: Transferencia a Cuenta Inactiva — SAGA con Compensación
+
+Endpoint: `POST /api/transferencias`
+Datos: cuenta origen activa → `BI-005` (cuenta bloqueada, `activa = false`)
+
+Esta prueba valida el mecanismo de compensación del SAGA:
+1. **PASO 1:** Débito ejecutado exitosamente en Banco Nacional (PostgreSQL)
+2. **PASO 2:** Falla al intentar acreditar — la cuenta destino está inactiva
+3. **COMPENSACIÓN:** El orquestador detecta el fallo, revierte el débito devolviendo el dinero a la cuenta origen
+4. Estado final: **REVERTIDA** — el saldo de la cuenta origen queda intacto
+
+Esto demuestra que el patrón SAGA garantiza que no quede dinero "perdido" entre bases de datos ante cualquier fallo en el paso de acreditación.
+
+![Prueba 4 - Cuenta Inactiva con Compensación](capturas/transferecnia_cuentaInactiva.png)
 
 ---
 
