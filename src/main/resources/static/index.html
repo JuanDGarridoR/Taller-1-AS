@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Transferencias Interbancarias</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Transferencias Interbancarias</h1>
+            <p class="subtitle">Transferencias entre Banco Nacional (PostgreSQL) y Banco Internacional (MySQL)</p>
+        </header>
+
+        <main>
+            <!-- Formulario de Transferencia -->
+            <section class="card">
+                <h2>Nueva Transferencia</h2>
+                <form id="formTransferencia">
+                    <div class="form-group">
+                        <label for="cuentaOrigen">Cuenta Origen (Banco Nacional)</label>
+                        <select id="cuentaOrigen" required>
+                            <option value="">Seleccione una cuenta...</option>
+                        </select>
+                        <div class="info-cuenta" id="infoCuentaOrigen"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cuentaDestino">Cuenta Destino (Banco Internacional)</label>
+                        <select id="cuentaDestino" required>
+                            <option value="">Seleccione una cuenta...</option>
+                        </select>
+                        <div class="info-cuenta" id="infoCuentaDestino"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="monto">Monto a Transferir</label>
+                        <input type="number" id="monto" step="0.01" min="0.01" placeholder="0.00" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Realizar Transferencia</button>
+                </form>
+            </section>
+
+            <!-- Resultado de la Transferencia -->
+            <section class="card" id="resultadoSection" style="display: none;">
+                <h2>Resultado de la Operación</h2>
+                <div id="resultado"></div>
+            </section>
+
+            <!-- Consulta de Saldos -->
+            <section class="card">
+                <h2>Consultar Saldo</h2>
+                <div class="flex-row">
+                    <input type="text" id="buscarCuenta" placeholder="Ej: BN-001 o BI-001">
+                    <button onclick="consultarSaldo()" class="btn-secondary">Consultar</button>
+                </div>
+                <div id="resultadoSaldo"></div>
+            </section>
+
+            <!-- Historial de Transferencias -->
+            <section class="card">
+                <h2>Historial de Transferencias</h2>
+                <div id="historial">
+                    <p class="text-muted">Las transferencias realizadas aparecerán aquí...</p>
+                </div>
+            </section>
+
+            <!-- Lista de Cuentas -->
+            <section class="card">
+                <h2>Cuentas Disponibles</h2>
+                <div class="tabs">
+                    <button class="tab active" onclick="mostrarCuentas('nacional')">Banco Nacional</button>
+                    <button class="tab" onclick="mostrarCuentas('internacional')">Banco Internacional</button>
+                    <button class="tab" onclick="mostrarCuentas('todas')">Todas</button>
+                </div>
+                <div id="listaCuentas"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Taller de Transacciones Distribuidas - PostgreSQL + MySQL</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
