@@ -7,7 +7,9 @@ Con ese link comprobé que la info del internacional estuviera bien, con la del 
 ## Integrantes del Equipo
 
 - Juan Diego Muñoz Angulo
-
+- Andres Felipe Torres Monroy
+- David Roa Neisa
+- Juan David Garrido Ramos
 ---
 
 ## Instrucciones de Instalación
