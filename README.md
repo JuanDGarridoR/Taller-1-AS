@@ -1,4 +1,3 @@
-Con ese link comprobé que la info del internacional estuviera bien, con la del nacional aun hay algo raro con la base de datos :) -> http://localhost:8080/api/cuentas/internacionalCon ese link comprobé que la info del internacional estuviera bien, con la del nacional aun hay algo raro con la base de datos :) -> http://localhost:8080/api/cuentas/internacional
 
 # Sistema de Transferencias Interbancarias Distribuidas
 ## Materia: Arquitectura de Software
@@ -39,7 +38,7 @@ docker-compose --version
 docker-compose up -d --build
 ```
 
-Este comando realizará las siguientes acciones:
+Este comando realiza lo siguiente:
 - Construye la imagen de la aplicación Spring Boot
 - Descarga las imágenes de PostgreSQL 15 y MySQL 8
 - Crea las redes y volúmenes necesarios
